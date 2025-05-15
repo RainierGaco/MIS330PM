@@ -62,25 +62,12 @@ def load_data():
 
     stopword = nltk.corpus.stopwords.words('english')
     combined_df['task_wo_punct_split_wo_stopwords'] = combined_df['task_wo_punct_split'].apply(
-        lambda x: [word for word in x if word not in stopword and word]
+        lambda x: [word for word in x if word not in stopword]
     )
 
     lemmatizer = WordNetLemmatizer()
     combined_df['task_wo_punct_split_wo_stopwords_lemmatized'] = combined_df['task_wo_punct_split_wo_stopwords'].apply(
         lambda x: [lemmatizer.lemmatize(word) for word in x]
-    )
-
-    combined_df['Lemmatized_Task'] = combined_df['task_wo_punct_split_wo_stopwords_lemmatized'].apply(
-        lambda x: ' '.join(sorted(set(x))) if x else ''
-    )
-
-    # Highlight which words were changed during lemmatization
-    def highlight_lemmatized(original, lemmatized):
-        return [f"**{o} → {l}**" if o != l else o for o, l in zip(original, lemmatized)]
-
-    combined_df['lemmatization_changes'] = combined_df.apply(
-        lambda row: highlight_lemmatized(row['task_wo_punct_split_wo_stopwords'], row['task_wo_punct_split_wo_stopwords_lemmatized']),
-        axis=1
     )
 
     combined_df["Hours"] = combined_df["minutes"] / 60
@@ -154,6 +141,7 @@ st.sidebar.download_button(
 )
 
 # --- OVERVIEW DASHBOARD ---
+
 st.title("📊 Task Dashboard Overview")
 
 col1, col2, col3, col4 = st.columns(4)
@@ -222,9 +210,37 @@ fig_hours.update_layout(
 
 st.plotly_chart(fig_hours, use_container_width=True)
 
-# Filtered Data Table (LIMITED TO 50 ROWS)
+# Filtered Data Table
 st.subheader("📄 Filtered Task Data Table")
+st.dataframe(filtered_data, use_container_width=True)
 
-required_cols = ['Full_Name', 'started_at', 'task', 'Lemmatized_Task', 'Hours', 'Categorized']
-
-missing
+# Top 50 Most Common Lemmatized Words
+with st.expander("🔍 Top 50 Most Common Words (Lemmatized)", expanded=False):
+    all_words = [word for sublist in filtered_data['task_wo_punct_split_wo_stopwords_lemmatized'] for word in sublist]
+    word_counts = Counter(all_words).most_common(50)
+    if word_counts:
+        words, counts = zip(*word_counts)
+        df_plot = pd.DataFrame({'Word': words, 'Count': counts})
+        fig = go.Figure(go.Bar(
+            x=df_plot['Word'],
+            y=df_plot['Count'],
+            marker=dict(
+                color=df_plot['Count'],
+                colorscale='Greens',
+                line=dict(width=0.5, color='black')
+            ),
+            hovertemplate='Word: %{x}<br>Count: %{y}<extra></extra>'
+        ))
+        fig.update_layout(
+            title="Top 50 Most Common Words (Lemmatized)",
+            xaxis_title="Word",
+            yaxis_title="Frequency",
+            xaxis_tickangle=-45,
+            plot_bgcolor='black',
+            font=dict(family='Arial', size=14, color='lightgreen'),
+            margin=dict(l=40, r=40, t=70, b=120),
+            yaxis=dict(gridcolor='darkgreen'),
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.write("No word frequency data available for the selected filters.")
