@@ -1,191 +1,127 @@
-import streamlit as st
-import pandas as pd
-import numpy as np
-from collections import Counter
-import os
-import warnings
-import string
-import re
-import nltk
-from nltk.stem import WordNetLemmatizer
-import plotly.express as px
+import plotly.graph_objects as go
 
-# Download required NLTK data once
-nltk.download('stopwords', quiet=True)
-nltk.download('wordnet', quiet=True)
+# --- DASHBOARD / OVERVIEW ---
 
-warnings.filterwarnings("ignore", message="Converting to PeriodArray/Index representation will drop timezone information")
+st.title("📊 Task Dashboard Overview")
 
-st.set_page_config(page_title="Task Dashboard", layout="wide")
+col1, col2, col3, col4 = st.columns(4)
 
-@st.cache_data
-def load_data():
-    csv_files = [file for file in os.listdir('.') if file.endswith('.csv')]
-    if not csv_files:
-        st.warning("No CSV files found in the current directory.")
-        return pd.DataFrame()
+col1.metric("Total Tasks", filtered_data.shape[0])
+col2.metric("Total Hours", round(filtered_data["Hours"].sum(), 2))
+col3.metric("Unique Users", filtered_data["Full_Name"].nunique())
+col4.metric("Unique Projects", filtered_data["ProjectID"].nunique())
 
-    dataframes = []
-    for filename in csv_files:
-        try:
-            df = pd.read_csv(filename)
-            # Attempt to extract numeric ID safely
-            parts = filename.split('-')
-            numeric_id = parts[2] if len(parts) > 2 else 'Unknown'
-            df['ProjectID'] = numeric_id
-            dataframes.append(df)
-        except Exception as e:
-            st.error(f"Error loading {filename}: {e}")
+# Tasks by Category (exploded)
+cat_counts = filtered_data.explode('Categorized')['Categorized'].value_counts()
 
-    if not dataframes:
-        return pd.DataFrame()
+# Modern bar chart with custom colors and rounded bars
+fig_cat = go.Figure()
+fig_cat.add_trace(go.Bar(
+    x=cat_counts.index,
+    y=cat_counts.values,
+    marker=dict(
+        color=cat_counts.values,
+        colorscale='Tealrose',
+        line=dict(width=0.8, color='DarkSlateGrey'),
+        # Rounded bars not directly supported in plotly, but we can soften appearance by layout
+    ),
+    hovertemplate='Category: %{x}<br>Tasks: %{y}<extra></extra>'
+))
 
-    combined_df = pd.concat(dataframes, ignore_index=True)
-
-    # Ensure necessary columns exist
-    required_cols = ['id', 'user_first_name', 'user_last_name', 'started_at', 'task', 'minutes']
-    missing_cols = [col for col in required_cols if col not in combined_df.columns]
-    if missing_cols:
-        st.error(f"Missing columns in data: {missing_cols}")
-        return pd.DataFrame()
-
-    combined_df['ProjectID-ID'] = combined_df['ProjectID'].astype(str) + "-" + combined_df['id'].astype(str)
-    combined_df['Full_Name'] = combined_df['user_first_name'].astype(str) + " " + combined_df['user_last_name'].astype(str)
-
-    # Convert dates
-    combined_df['started_at'] = pd.to_datetime(combined_df['started_at'], errors='coerce')
-    combined_df['week'] = combined_df['started_at'].dt.isocalendar().week
-    combined_df['month'] = combined_df['started_at'].dt.month
-    combined_df['year'] = combined_df['started_at'].dt.year
-    combined_df['year_month'] = combined_df['started_at'].dt.to_period('M')
-
-    # Clean and process task text
-    combined_df['task_wo_punct'] = combined_df['task'].astype(str).apply(
-        lambda x: ''.join(ch for ch in x if ch not in string.punctuation)
+fig_cat.update_layout(
+    title='Task Counts by Category',
+    xaxis_title='Category',
+    yaxis_title='Number of Tasks',
+    xaxis_tickangle=-45,
+    plot_bgcolor='white',
+    font=dict(family='Arial', size=14, color='black'),
+    margin=dict(l=40, r=40, t=70, b=100),
+    yaxis=dict(
+        gridcolor='LightGray',
+        zeroline=True,
+        zerolinecolor='LightGray'
     )
-    combined_df['task_wo_punct_split'] = combined_df['task_wo_punct'].str.lower().str.split()
+)
 
-    stopwords = set(nltk.corpus.stopwords.words('english'))
-    combined_df['task_wo_punct_split_wo_stopwords'] = combined_df['task_wo_punct_split'].apply(
-        lambda words: [word for word in words if word not in stopwords]
+st.plotly_chart(fig_cat, use_container_width=True)
+
+# Hours over Time (monthly)
+hours_time = filtered_data.groupby('year_month')['Hours'].sum().reset_index()
+hours_time['year_month'] = hours_time['year_month'].astype(str)
+
+fig_time = go.Figure()
+
+fig_time.add_trace(go.Scatter(
+    x=hours_time['year_month'],
+    y=hours_time['Hours'],
+    mode='lines+markers',
+    line=dict(color='teal', width=3, shape='spline', smoothing=1.3),
+    marker=dict(size=8, color='darkcyan'),
+    hovertemplate='Month: %{x}<br>Hours: %{y:.2f}<extra></extra>'
+))
+
+fig_time.update_layout(
+    title='Total Hours Worked Over Time',
+    xaxis_title='Year-Month',
+    yaxis_title='Total Hours',
+    plot_bgcolor='white',
+    font=dict(family='Arial', size=14, color='black'),
+    margin=dict(l=40, r=40, t=70, b=50),
+    xaxis=dict(
+        showgrid=True,
+        gridcolor='LightGray',
+        tickangle=-45
+    ),
+    yaxis=dict(
+        showgrid=True,
+        gridcolor='LightGray',
+        zeroline=True,
+        zerolinecolor='LightGray'
     )
+)
 
-    lemmatizer = WordNetLemmatizer()
-    combined_df['task_wo_punct_split_wo_stopwords_lemmatized'] = combined_df['task_wo_punct_split_wo_stopwords'].apply(
-        lambda words: [lemmatizer.lemmatize(word) for word in words]
-    )
+st.plotly_chart(fig_time, use_container_width=True)
 
-    combined_df["Hours"] = combined_df["minutes"] / 60
-
-    # Define categories
-    categories = {
-        "technology": ["website", "sql", "backend", "repository", "ai", "coding", "file", "database", "application",
-                       "program", "flask", "html", "css", "javascript"],
-        "actions": ["reviewed", "created", "tested", "fixed", "debugged", "implemented", "researched", "planned",
-                    "updated", "designed", "documented", "analyzed", "optimized", "added", "removed"],
-        "design": ["logo", "design", "styling", "layout", "responsive", "theme", "navbar", "icon", "image", "photo",
-                   "redesigning", "wireframes"],
-        "writing": ["blog", "guide", "documentation", "report", "note", "summary", "draft", "content", "copywriting"],
-        "meetings": ["meeting", "call", "discussion", "session", "presentation", "team"],
-        "business": ["grant", "funding", "startup", "loan", "entrepreneur", "business", "government"],
-        "errors": ["bug", "error", "issue", "fixing", "debugging", "problem", "mistake"],
-        "time": ["hour", "day", "week", "month", "year"],
-        "miscellaneous": []
-    }
-
-    def categorize_words(words, categories):
-        matched = set()
-        for word in words:
-            found = False
-            for cat, keywords in categories.items():
-                if word in keywords:
-                    matched.add(cat)
-                    found = True
-                    break
-            if not found:
-                matched.add("miscellaneous")
-        return list(matched)
-
-    combined_df['Categorized'] = combined_df['task_wo_punct_split_wo_stopwords_lemmatized'].apply(
-        lambda x: categorize_words(x, categories)
-    )
-
-    return combined_df
-
-
-combined_df = load_data()
-
-if combined_df.empty:
-    st.info("No data available to display. Please add CSV files to the directory.")
-else:
-    st.sidebar.header("Filters")
-
-    all_categories = combined_df['Categorized'].explode().unique()
-    selected_categories = st.sidebar.multiselect("Select Categories", options=sorted(all_categories))
-
-    date_filter = st.sidebar.date_input("Filter by Date", value=[])
-    search_term = st.sidebar.text_input("Search Task", "")
-    full_name_options = sorted(combined_df['Full_Name'].unique())
-    selected_full_names = st.sidebar.multiselect("Filter by Full Name", options=full_name_options)
-
-    filtered_data = combined_df.copy()
-
-    if selected_categories:
-        def category_filter(cat_list):
-            return any(cat in cat_list for cat in selected_categories)
-        filtered_data = filtered_data[filtered_data['Categorized'].apply(category_filter)]
-
-    if len(date_filter) == 2:
-        start_date, end_date = pd.to_datetime(date_filter[0]), pd.to_datetime(date_filter[1])
-        filtered_data = filtered_data[
-            (filtered_data['started_at'] >= start_date) & (filtered_data['started_at'] <= end_date)
-        ]
-
-    if search_term:
-        filtered_data = filtered_data[filtered_data['task'].str.contains(search_term, case=False, na=False)]
-
-    if selected_full_names:
-        filtered_data = filtered_data[filtered_data['Full_Name'].isin(selected_full_names)]
-
-    csv_data = filtered_data.to_csv(index=False).encode('utf-8')
-
-    st.sidebar.download_button(
-        label="📥 Download Filtered CSV",
-        data=csv_data,
-        file_name="filtered_data.csv",
-        mime="text/csv"
-    )
-
-    # Visualization: Top 50 Most Common Lemmatized Words
-    with st.expander("🔍 Top 50 Most Common Searches (Lemmatized)", expanded=True):
-        all_words = [word for sublist in filtered_data['task_wo_punct_split_wo_stopwords_lemmatized'] for word in sublist]
-        word_counts = Counter(all_words).most_common(50)
-        if word_counts:
-            words, counts = zip(*word_counts)
-            df_plot = pd.DataFrame({'Word': words, 'Count': counts})
-            fig = px.bar(
-                df_plot,
-                x='Word',
-                y='Count',
-                color='Count',
-                color_continuous_scale='YlOrRd',
-                title="Top 50 Most Common Lemmatized Words",
-                labels={'Count': 'Frequency'},
-                hover_data={'Word': True, 'Count': True}
-            )
-            fig.update_layout(xaxis_tickangle=-45)
-            st.plotly_chart(fig, use_container_width=True)
-        else:
-            fig = px.bar(title="No Data Found for Search Frequency")
-            fig.update_layout(
-                xaxis={'visible': False},
-                yaxis={'visible': False},
-                annotations=[{
-                    'text': "No search data available",
-                    'xref': "paper",
-                    'yref': "paper",
-                    'showarrow': False,
-                    'font': {'size': 16}
-                }]
-            )
-            st.plotly_chart(fig, use_container_width=True)
+# Top 50 Most Common Lemmatized Words
+with st.expander("🔍 Top 50 Most Common Searches (Lemmatized)", expanded=True):
+    all_words = [word for sublist in filtered_data['task_wo_punct_split_wo_stopwords_lemmatized'] for word in sublist]
+    word_counts = Counter(all_words).most_common(50)
+    if word_counts:
+        words, counts = zip(*word_counts)
+        df_plot = pd.DataFrame({'Word': words, 'Count': counts})
+        fig = go.Figure(go.Bar(
+            x=df_plot['Word'],
+            y=df_plot['Count'],
+            marker=dict(
+                color=df_plot['Count'],
+                colorscale='Viridis',
+                line=dict(width=0.5, color='black')
+            ),
+            hovertemplate='Word: %{x}<br>Count: %{y}<extra></extra>'
+        ))
+        fig.update_layout(
+            title="Top 50 Most Common Lemmatized Words",
+            xaxis_title="Word",
+            yaxis_title="Frequency",
+            xaxis_tickangle=-45,
+            plot_bgcolor='white',
+            font=dict(family='Arial', size=14, color='black'),
+            margin=dict(l=40, r=40, t=70, b=120),
+            yaxis=dict(gridcolor='LightGray'),
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        fig = go.Figure()
+        fig.update_layout(
+            title="No Data Found for Search Frequency",
+            xaxis=dict(visible=False),
+            yaxis=dict(visible=False),
+            annotations=[dict(
+                text="No search data available",
+                xref="paper", yref="paper",
+                showarrow=False,
+                font=dict(size=16)
+            )],
+            plot_bgcolor='white'
+        )
+        st.plotly_chart(fig, use_container_width=True)
