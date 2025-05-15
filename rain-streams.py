@@ -10,240 +10,160 @@ import string
 import re
 import nltk
 from nltk.stem import WordNetLemmatizer
+from wordcloud import WordCloud
 import plotly.graph_objects as go
+import plotly.express as px
 
 nltk.download('stopwords')
 nltk.download('wordnet')
 
-warnings.filterwarnings("ignore", message="Converting to PeriodArray/Index representation will drop timezone information")
+warnings.filterwarnings("ignore")
 
 st.set_page_config(page_title="Task Dashboard", layout="wide")
+
+# Custom styling
+st.markdown("""
+    <style>
+        .main, .block-container {
+            background-color: black;
+            color: lightgreen;
+        }
+        .css-18e3th9 {
+            background-color: black;
+        }
+        .css-1d391kg, .css-1v0mbdj, .css-ffhzg2, .css-1dp5vir, .stMetric {
+            color: lightgreen !important;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
 @st.cache_data
 def load_data():
     csv_files = [file for file in os.listdir('.') if file.endswith('.csv')]
     if not csv_files:
-        st.warning("No CSV files found in the repository.")
+        st.warning("No CSV files found.")
         return pd.DataFrame()
 
-    dataframes = []
-    for filename in csv_files:
-        df = pd.read_csv(filename)
-        numeric_id = filename.split('-')[2] if '-' in filename else 'Unknown'
-        df['ProjectID'] = numeric_id
-        dataframes.append(df)
+    dfs = []
+    for file in csv_files:
+        df = pd.read_csv(file)
+        df['ProjectID'] = file.split('-')[2] if '-' in file else 'Unknown'
+        dfs.append(df)
 
-    combined_df = pd.concat(dataframes, ignore_index=True)
+    df = pd.concat(dfs, ignore_index=True)
+    df['ProjectID-ID'] = df['ProjectID'].astype(str) + "-" + df['id'].astype(str)
+    df['Full_Name'] = df['user_first_name'].astype(str) + " " + df['user_last_name'].astype(str)
+    df['started_at'] = pd.to_datetime(df['started_at'], errors="coerce").dt.tz_localize(None)
+    df['week'] = df['started_at'].dt.isocalendar().week
+    df['month'] = df['started_at'].dt.month
+    df['year_month'] = df['started_at'].dt.to_period("M")
+    df["Hours"] = df["minutes"] / 60
 
-    combined_df['ProjectID-ID'] = combined_df['ProjectID'].astype(str) + "-" + combined_df['id'].astype(str)
-    combined_df['Full_Name'] = combined_df['user_first_name'].astype(str) + " " + combined_df['user_last_name'].astype(str)
-    combined_df['week'] = pd.to_datetime(combined_df['started_at'], errors="coerce").dt.isocalendar().week
-    combined_df['month'] = pd.to_datetime(combined_df['started_at'], errors="coerce").dt.month
-    combined_df['year'] = pd.to_datetime(combined_df['started_at'], errors="coerce").dt.year
-
-    combined_df['task_wo_punct'] = combined_df['task'].apply(lambda x: ''.join([char for char in str(x) if char not in string.punctuation]))
-    combined_df['task_wo_punct_split'] = combined_df['task_wo_punct'].apply(lambda x: re.split(r'\W+', str(x).lower()))
-
-    stopword = nltk.corpus.stopwords.words('english')
-    combined_df['task_wo_punct_split_wo_stopwords'] = combined_df['task_wo_punct_split'].apply(
-        lambda x: [word for word in x if word not in stopword]
-    )
-
+    # Preprocessing tasks
+    df['task_wo_punct'] = df['task'].apply(lambda x: ''.join(ch for ch in str(x) if ch not in string.punctuation))
+    df['task_wo_punct_split'] = df['task_wo_punct'].apply(lambda x: re.split(r'\W+', x.lower()))
+    stopwords = nltk.corpus.stopwords.words('english')
     lemmatizer = WordNetLemmatizer()
-    combined_df['task_wo_punct_split_wo_stopwords_lemmatized'] = combined_df['task_wo_punct_split_wo_stopwords'].apply(
-        lambda x: [lemmatizer.lemmatize(word) for word in x]
+    df['task_wo_punct_split_wo_stopwords_lemmatized'] = df['task_wo_punct_split'].apply(
+        lambda x: [lemmatizer.lemmatize(word) for word in x if word not in stopwords]
     )
 
-    combined_df["Hours"] = combined_df["minutes"] / 60
-    combined_df["week"] = pd.to_datetime(combined_df["started_at"], errors="coerce").dt.isocalendar().week
-    combined_df["month"] = pd.to_datetime(combined_df["started_at"], errors="coerce").dt.month
-    combined_df["year_month"] = pd.to_datetime(combined_df["started_at"], errors="coerce").dt.to_period("M")
-
+    # Categorization
     categories = {
-        "technology": ["website", "sql", "backend", "repository", "ai", "coding", "file", "database", "application", "program", "flask", "html", "css", "javascript"],
-        "actions": ["reviewed", "created", "tested", "fixed", "debugged", "implemented", "researched", "planned", "updated", "designed", "documented", "analyzed", "optimized", "added", "removed"],
-        "design": ["logo", "design", "styling", "layout", "responsive", "theme", "navbar", "icon", "image", "photo", "redesigning", "wireframes"],
-        "writing": ["blog", "guide", "documentation", "report", "note", "summary", "draft", "content", "copywriting"],
-        "meetings": ["meeting", "call", "discussion", "session", "presentation", "team"],
-        "business": ["grant", "funding", "startup", "loan", "entrepreneur", "business", "government"],
-        "errors": ["bug", "error", "issue", "fixing", "debugging", "problem", "mistake"],
-        "time": ["hour", "day", "week", "month", "year"],
+        "technology": ["website", "sql", "backend", "repository", "ai", "coding", "database", "application", "flask", "html", "css", "javascript"],
+        "actions": ["reviewed", "created", "tested", "fixed", "implemented", "updated", "documented", "analyzed", "added", "removed"],
+        "design": ["logo", "design", "layout", "theme", "navbar", "icon"],
+        "writing": ["blog", "guide", "documentation", "note", "summary", "content"],
+        "meetings": ["meeting", "call", "discussion", "presentation", "team"],
+        "business": ["grant", "funding", "startup", "loan", "business"],
+        "errors": ["bug", "error", "issue", "fixing", "debugging"],
         "miscellaneous": []
     }
 
-    def categorize_words(words, categories):
-        matched_categories = set()
+    def categorize(words):
+        matched = set()
         for word in words:
-            found = False
             for category, keywords in categories.items():
                 if word in keywords:
-                    matched_categories.add(category)
-                    found = True
+                    matched.add(category)
                     break
-            if not found:
-                matched_categories.add("miscellaneous")
-        return list(matched_categories)
+            else:
+                matched.add("miscellaneous")
+        return list(matched)
 
-    combined_df['Categorized'] = combined_df['task_wo_punct_split_wo_stopwords_lemmatized'].apply(lambda x: categorize_words(x, categories))
+    df['Categorized'] = df['task_wo_punct_split_wo_stopwords_lemmatized'].apply(lambda x: categorize(x))
+    return df
 
-    return combined_df
+df = load_data()
 
-combined_df = load_data()
-
-# --- SIDEBAR FILTERS ---
+# Sidebar filters
 st.sidebar.header("Filters")
-categories = st.sidebar.multiselect("Select Categories", options=combined_df['Categorized'].explode().unique())
+selected_cats = st.sidebar.multiselect("Select Categories", df['Categorized'].explode().unique())
 date_filter = st.sidebar.date_input("Filter by Date", [])
+name_filter = st.sidebar.multiselect("Filter by Full Name", df['Full_Name'].unique())
 
-full_name_filter = st.sidebar.multiselect("Filter by Full Name", options=combined_df['Full_Name'].unique())
-
-filtered_data = combined_df.copy()
-
-if categories:
-    def filter_categories(category_list):
-        return any(cat in category_list for cat in categories)
-    filtered_data = filtered_data[filtered_data['Categorized'].apply(filter_categories)]
-
+filtered_df = df.copy()
+if selected_cats:
+    filtered_df = filtered_df[filtered_df['Categorized'].apply(lambda x: any(cat in x for cat in selected_cats))]
 if len(date_filter) == 2:
-    filtered_data["started_at"] = pd.to_datetime(filtered_data["started_at"], errors="coerce").dt.tz_localize(None)
-    start_date = pd.to_datetime(date_filter[0])
-    end_date = pd.to_datetime(date_filter[1])
-    filtered_data = filtered_data[
-        (filtered_data["started_at"] >= start_date) &
-        (filtered_data["started_at"] <= end_date)
-    ]
+    start, end = pd.to_datetime(date_filter[0]), pd.to_datetime(date_filter[1])
+    filtered_df = filtered_df[(filtered_df['started_at'] >= start) & (filtered_df['started_at'] <= end)]
+if name_filter:
+    filtered_df = filtered_df[filtered_df['Full_Name'].isin(name_filter)]
 
-if full_name_filter:
-    filtered_data = filtered_data[filtered_data['Full_Name'].isin(full_name_filter)]
+# Tabs layout
+tab1, tab2, tab3, tab4 = st.tabs(["📂 Category Breakdown", "📈 Time Series", "🔠 Word Cloud", "📋 Data Table"])
 
-# Download button
-csv_data = filtered_data.to_csv(index=False).encode('utf-8')
-st.sidebar.download_button(
-    label="⬇️ Download Filtered CSV",
-    data=csv_data,
-    file_name="filtered_data.csv",
-    mime="text/csv"
-)
+# Tab 1: Category Breakdown
+with tab1:
+    st.header("📂 Task Categories")
+    cat_counts = filtered_df.explode('Categorized')['Categorized'].value_counts()
+    fig1 = px.bar(cat_counts, x=cat_counts.index, y=cat_counts.values,
+                  labels={"x": "Category", "y": "Task Count"},
+                  color=cat_counts.values, color_continuous_scale="greens")
+    st.plotly_chart(fig1, use_container_width=True)
 
-# --- OVERVIEW DASHBOARD ---
+    pie_fig = px.pie(cat_counts, names=cat_counts.index, values=cat_counts.values, title="Category Distribution")
+    st.plotly_chart(pie_fig, use_container_width=True)
 
-st.title("📊 Task Dashboard Overview")
+# Tab 2: Time Series
+with tab2:
+    st.header("📈 Time Series Overview")
+    time_df = filtered_df.groupby('year_month')['Hours'].sum().reset_index()
+    time_df['year_month'] = time_df['year_month'].astype(str)
 
-col1, col2, col3, col4 = st.columns(4)
+    line_fig = px.line(time_df, x="year_month", y="Hours", markers=True, title="Total Hours Over Time")
+    st.plotly_chart(line_fig, use_container_width=True)
 
-col1.metric("Total Tasks", filtered_data.shape[0])
-col2.metric("Total Hours", round(filtered_data["Hours"].sum(), 2))
-col3.metric("Unique Users", filtered_data["Full_Name"].nunique())
-col4.metric("Unique Projects", filtered_data["ProjectID"].nunique())
+    task_time = filtered_df.groupby('year_month').size().reset_index(name="Task Count")
+    task_time['year_month'] = task_time['year_month'].astype(str)
+    area_fig = px.area(task_time, x="year_month", y="Task Count", title="Tasks Over Time")
+    st.plotly_chart(area_fig, use_container_width=True)
 
-# Tasks by Category
-cat_counts = filtered_data.explode('Categorized')['Categorized'].value_counts()
+# Tab 3: Word Cloud
+with tab3:
+    st.header("🔠 Word Cloud")
+    words = [word for row in filtered_df['task_wo_punct_split_wo_stopwords_lemmatized'] for word in row]
+    word_counts = Counter(words).most_common(50)
 
-fig_cat = go.Figure()
-fig_cat.add_trace(go.Bar(
-    x=cat_counts.index,
-    y=cat_counts.values,
-    marker=dict(
-        color=cat_counts.values,
-        colorscale='Blues',
-        line=dict(width=0.8, color='DarkSlateGrey')
-    ),
-    hovertemplate='Category: %{x}<br>Tasks: %{y}<extra></extra>'
-))
-
-fig_cat.update_layout(
-    title='Task Counts by Category',
-    xaxis_title='Category',
-    yaxis_title='Number of Tasks',
-    xaxis_tickangle=-45,
-    plot_bgcolor='white',
-    font=dict(family='Arial', size=14, color='black'),
-    margin=dict(l=40, r=40, t=70, b=100),
-    yaxis=dict(
-        gridcolor='LightGray',
-        zeroline=True,
-        zerolinecolor='LightGray'
-    )
-)
-
-st.plotly_chart(fig_cat, use_container_width=True)
-
-# Hours over Time (monthly)
-hours_time = filtered_data.groupby('year_month')['Hours'].sum().reset_index()
-hours_time['year_month'] = hours_time['year_month'].astype(str)
-
-fig_time = go.Figure()
-fig_time.add_trace(go.Scatter(
-    x=hours_time['year_month'],
-    y=hours_time['Hours'],
-    mode='lines+markers',
-    line=dict(color='seagreen', width=3, shape='spline', smoothing=1.3),
-    marker=dict(size=8, color='mediumseagreen'),
-    hovertemplate='Month: %{x}<br>Hours: %{y:.2f}<extra></extra>'
-))
-
-fig_time.update_layout(
-    title='Total Hours Worked Over Time',
-    xaxis_title='Year-Month',
-    yaxis_title='Total Hours',
-    plot_bgcolor='white',
-    font=dict(family='Arial', size=14, color='black'),
-    margin=dict(l=40, r=40, t=70, b=50),
-    xaxis=dict(
-        showgrid=True,
-        gridcolor='LightGray',
-        tickangle=-45
-    ),
-    yaxis=dict(
-        showgrid=True,
-        gridcolor='LightGray',
-        zeroline=True,
-        zerolinecolor='LightGray'
-    )
-)
-
-st.plotly_chart(fig_time, use_container_width=True)
-
-# Top 50 Most Common Lemmatized Words
-with st.expander("🔍 Top 50 Most Common Words (Lemmatized)", expanded=True):
-    all_words = [word for sublist in filtered_data['task_wo_punct_split_wo_stopwords_lemmatized'] for word in sublist]
-    word_counts = Counter(all_words).most_common(50)
     if word_counts:
-        words, counts = zip(*word_counts)
-        df_plot = pd.DataFrame({'Word': words, 'Count': counts})
-        fig = go.Figure(go.Bar(
-            x=df_plot['Word'],
-            y=df_plot['Count'],
-            marker=dict(
-                color=df_plot['Count'],
-                colorscale='Greens',
-                line=dict(width=0.5, color='black')
-            ),
-            hovertemplate='Word: %{x}<br>Count: %{y}<extra></extra>'
-        ))
-        fig.update_layout(
-            title="Top 50 Most Common Words (Lemmatized)",
-            xaxis_title="Word",
-            yaxis_title="Frequency",
-            xaxis_tickangle=-45,
-            plot_bgcolor='white',
-            font=dict(family='Arial', size=14, color='black'),
-            margin=dict(l=40, r=40, t=70, b=120),
-            yaxis=dict(gridcolor='LightGray'),
-        )
-        st.plotly_chart(fig, use_container_width=True)
+        wordcloud = WordCloud(width=1000, height=500, background_color='black', colormap='Greens').generate_from_frequencies(dict(word_counts))
+        fig_wc, ax = plt.subplots(figsize=(12, 6))
+        ax.imshow(wordcloud, interpolation='bilinear')
+        ax.axis("off")
+        st.pyplot(fig_wc)
+
+        word_df = pd.DataFrame(word_counts, columns=["Word", "Count"])
+        bar_fig = px.bar(word_df.head(20), x="Word", y="Count", title="Top 20 Words")
+        st.plotly_chart(bar_fig, use_container_width=True)
     else:
-        fig = go.Figure()
-        fig.update_layout(
-            title="No Data Found",
-            xaxis=dict(visible=False),
-            yaxis=dict(visible=False),
-            annotations=[dict(
-                text="No data available",
-                xref="paper", yref="paper",
-                showarrow=False,
-                font=dict(size=16)
-            )],
-            plot_bgcolor='white'
-        )
-        st.plotly_chart(fig, use_container_width=True)
+        st.write("No word data available.")
+
+# Tab 4: Data Table
+with tab4:
+    st.header("📋 Filtered Task Table")
+    st.dataframe(filtered_df, use_container_width=True)
+
+    top_users = filtered_df.groupby('Full_Name')['Hours'].sum().reset_index().sort_values(by="Hours", ascending=False)
+    user_fig = px.bar(top_users, x="Full_Name", y="Hours", title="Hours Worked by User", color="Hours", color_continuous_scale="greens")
+    st.plotly_chart(user_fig, use_container_width=True)
