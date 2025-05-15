@@ -1,4 +1,4 @@
-import streamlit as st
+import streamlit as st 
 import pandas as pd
 import numpy as np
 from collections import Counter
@@ -37,7 +37,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 @st.cache_data
-
 def load_data():
     csv_files = [file for file in os.listdir('.') if file.endswith('.csv')]
     if not csv_files:
@@ -172,15 +171,28 @@ with wordcloud_tab:
     word_counts = Counter(all_words).most_common(50)
 
     if word_counts:
+        # Generate word cloud
         wordcloud = WordCloud(width=1000, height=500, background_color='black', colormap='Greens').generate_from_frequencies(dict(word_counts))
         fig_wc, ax = plt.subplots(figsize=(10, 5))
         ax.imshow(wordcloud, interpolation='bilinear')
         ax.axis("off")
         st.pyplot(fig_wc)
 
+        # Prepare dataframe for visualization
         word_df = pd.DataFrame(word_counts, columns=["Word", "Count"])
-        bar_fig = px.bar(word_df.head(20), x="Word", y="Count", title="Top 20 Words")
-        st.plotly_chart(bar_fig, use_container_width=True)
+
+        # Use Plotly Treemap for Top 20 Words instead of bar chart
+        top_words_df = word_df.head(20)
+        treemap_fig = px.treemap(
+            top_words_df,
+            path=['Word'],
+            values='Count',
+            color='Count',
+            color_continuous_scale='Greens',
+            title="Top 20 Words Treemap"
+        )
+        st.plotly_chart(treemap_fig, use_container_width=True)
+
     else:
         st.info("No word frequency data available for the selected filters.")
 
