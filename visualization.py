@@ -93,25 +93,23 @@ combined_df = load_data()
 
 st.markdown("""
     <style>
-    .main {
-        background-color: #f0fdf4;
+    .main, .block-container {
+        background-color: #000000;
+        color: #d0f0c0;
     }
-    .stApp {
-        background-color: #f0fdf4;
+    .stMetric label {
+        color: #98FB98;
     }
-    .css-18e3th9 {
-        background-color: #d1fae5;
-    }
-    h1, h2, h3, h4, h5, h6 {
-        color: #065f46;
+    .css-1v0mbdj, .css-ffhzg2, .css-1q8dd3e, .css-h5rgaw {
+        color: #90ee90 !important;
     }
     </style>
 """, unsafe_allow_html=True)
 
+# --- SIDEBAR FILTERS ---
 st.sidebar.header("Filters")
 categories = st.sidebar.multiselect("Select Categories", options=combined_df['Categorized'].explode().unique())
 date_filter = st.sidebar.date_input("Filter by Date", [])
-
 full_name_filter = st.sidebar.multiselect("Filter by Full Name", options=combined_df['Full_Name'].unique())
 
 filtered_data = combined_df.copy()
@@ -133,6 +131,7 @@ if len(date_filter) == 2:
 if full_name_filter:
     filtered_data = filtered_data[filtered_data['Full_Name'].isin(full_name_filter)]
 
+# Download button
 csv_data = filtered_data.to_csv(index=False).encode('utf-8')
 st.sidebar.download_button(
     label="⬇️ Download Filtered CSV",
@@ -140,6 +139,8 @@ st.sidebar.download_button(
     file_name="filtered_data.csv",
     mime="text/csv"
 )
+
+# --- OVERVIEW DASHBOARD ---
 
 st.title("📊 Task Dashboard Overview")
 
@@ -150,6 +151,7 @@ col2.metric("Total Hours", round(filtered_data["Hours"].sum(), 2))
 col3.metric("Unique Users", filtered_data["Full_Name"].nunique())
 col4.metric("Unique Projects", filtered_data["ProjectID"].nunique())
 
+# Tasks by Category
 cat_counts = filtered_data.explode('Categorized')['Categorized'].value_counts()
 
 fig_cat = go.Figure()
@@ -159,7 +161,7 @@ fig_cat.add_trace(go.Bar(
     marker=dict(
         color=cat_counts.values,
         colorscale='Greens',
-        line=dict(width=0.8, color='DarkGreen')
+        line=dict(width=0.8, color='black')
     ),
     hovertemplate='Category: %{x}<br>Tasks: %{y}<extra></extra>'
 ))
@@ -169,75 +171,24 @@ fig_cat.update_layout(
     xaxis_title='Category',
     yaxis_title='Number of Tasks',
     xaxis_tickangle=-45,
-    plot_bgcolor='white',
-    font=dict(family='Arial', size=14, color='black'),
+    plot_bgcolor='black',
+    paper_bgcolor='black',
+    font=dict(family='Arial', size=14, color='lightgreen'),
     margin=dict(l=40, r=40, t=70, b=100),
     yaxis=dict(
-        gridcolor='LightGreen',
+        gridcolor='gray',
         zeroline=True,
-        zerolinecolor='LightGreen'
+        zerolinecolor='gray'
     )
 )
 
 st.plotly_chart(fig_cat, use_container_width=True)
 
-# --- New Unique Visualization: Stacked Bar of Hours per Category per Month ---
-cat_hours = filtered_data.explode("Categorized").groupby(["year_month", "Categorized"])['Hours'].sum().reset_index()
-cat_hours["year_month"] = cat_hours["year_month"].astype(str)
-fig_stack = px.bar(
-    cat_hours,
-    x="year_month",
-    y="Hours",
-    color="Categorized",
-    title="📦 Total Hours Spent per Category Over Time",
-    color_discrete_sequence=px.colors.sequential.Greens
-)
-fig_stack.update_layout(
-    xaxis_title="Month",
-    yaxis_title="Total Hours",
-    plot_bgcolor='white',
-    font=dict(family='Arial', size=14),
-    legend_title="Category",
-    margin=dict(l=40, r=40, t=70, b=100)
-)
-st.plotly_chart(fig_stack, use_container_width=True)
+# Display filtered data
+st.subheader("📋 Filtered Task Data")
+st.dataframe(filtered_data, use_container_width=True)
 
-# --- Time Trend ---
-hours_time = filtered_data.groupby('year_month')['Hours'].sum().reset_index()
-hours_time['year_month'] = hours_time['year_month'].astype(str)
-
-fig_time = go.Figure()
-fig_time.add_trace(go.Scatter(
-    x=hours_time['year_month'],
-    y=hours_time['Hours'],
-    mode='lines+markers',
-    line=dict(color='seagreen', width=3, shape='spline', smoothing=1.3),
-    marker=dict(size=8, color='mediumseagreen'),
-    hovertemplate='Month: %{x}<br>Hours: %{y:.2f}<extra></extra>'
-))
-
-fig_time.update_layout(
-    title='Total Hours Worked Over Time',
-    xaxis_title='Year-Month',
-    yaxis_title='Total Hours',
-    plot_bgcolor='white',
-    font=dict(family='Arial', size=14, color='black'),
-    margin=dict(l=40, r=40, t=70, b=50),
-    xaxis=dict(
-        showgrid=True,
-        gridcolor='LightGreen',
-        tickangle=-45
-    ),
-    yaxis=dict(
-        showgrid=True,
-        gridcolor='LightGreen',
-        zeroline=True,
-        zerolinecolor='LightGreen'
-    )
-)
-
-st.plotly_chart(fig_time, use_container_width=True)
-
+# Top 50 Most Common Lemmatized Words
 with st.expander("🔍 Top 50 Most Common Words (Lemmatized)", expanded=True):
     all_words = [word for sublist in filtered_data['task_wo_punct_split_wo_stopwords_lemmatized'] for word in sublist]
     word_counts = Counter(all_words).most_common(50)
@@ -259,10 +210,11 @@ with st.expander("🔍 Top 50 Most Common Words (Lemmatized)", expanded=True):
             xaxis_title="Word",
             yaxis_title="Frequency",
             xaxis_tickangle=-45,
-            plot_bgcolor='white',
-            font=dict(family='Arial', size=14, color='black'),
+            plot_bgcolor='black',
+            paper_bgcolor='black',
+            font=dict(family='Arial', size=14, color='lightgreen'),
             margin=dict(l=40, r=40, t=70, b=120),
-            yaxis=dict(gridcolor='LightGreen'),
+            yaxis=dict(gridcolor='gray'),
         )
         st.plotly_chart(fig, use_container_width=True)
     else:
@@ -275,8 +227,9 @@ with st.expander("🔍 Top 50 Most Common Words (Lemmatized)", expanded=True):
                 text="No data available",
                 xref="paper", yref="paper",
                 showarrow=False,
-                font=dict(size=16)
+                font=dict(size=16, color='lightgreen')
             )],
-            plot_bgcolor='white'
+            plot_bgcolor='black',
+            paper_bgcolor='black'
         )
         st.plotly_chart(fig, use_container_width=True)
