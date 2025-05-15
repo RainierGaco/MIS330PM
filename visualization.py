@@ -10,7 +10,7 @@ import string
 import re
 import nltk
 from nltk.stem import WordNetLemmatizer
-from wordcloud import WordCloud  # NEW
+from wordcloud import WordCloud
 import plotly.graph_objects as go
 import plotly.express as px
 
@@ -141,53 +141,32 @@ st.sidebar.download_button(
     mime="text/csv"
 )
 
-# --- OVERVIEW DASHBOARD ---
+st.title("📊 Task Dashboard")
 
-st.title("📊 Task Dashboard Overview")
-
+# Summary Metrics
+st.subheader("🔢 Summary Metrics")
 col1, col2, col3, col4 = st.columns(4)
-
 col1.metric("Total Tasks", filtered_data.shape[0])
 col2.metric("Total Hours", round(filtered_data["Hours"].sum(), 2))
 col3.metric("Unique Users", filtered_data["Full_Name"].nunique())
 col4.metric("Unique Projects", filtered_data["ProjectID"].nunique())
 
-# Tasks by Category
+# Pre-calculate visuals
 cat_counts = filtered_data.explode('Categorized')['Categorized'].value_counts()
-
 fig_cat = go.Figure()
 fig_cat.add_trace(go.Bar(
     x=cat_counts.index,
     y=cat_counts.values,
-    marker=dict(
-        color=cat_counts.values,
-        colorscale='Greens',
-        line=dict(width=0.8, color='DarkGreen')
-    ),
+    marker=dict(color=cat_counts.values, colorscale='Greens', line=dict(width=0.8, color='DarkGreen')),
     hovertemplate='Category: %{x}<br>Tasks: %{y}<extra></extra>'
 ))
+fig_cat.update_layout(title='Task Counts by Category', xaxis_title='Category', yaxis_title='Number of Tasks',
+                      xaxis_tickangle=-45, plot_bgcolor='black', font=dict(family='Arial', size=14, color='lightgreen'),
+                      margin=dict(l=40, r=40, t=70, b=100),
+                      yaxis=dict(gridcolor='darkgreen', zeroline=True, zerolinecolor='darkgreen'))
 
-fig_cat.update_layout(
-    title='Task Counts by Category',
-    xaxis_title='Category',
-    yaxis_title='Number of Tasks',
-    xaxis_tickangle=-45,
-    plot_bgcolor='black',
-    font=dict(family='Arial', size=14, color='lightgreen'),
-    margin=dict(l=40, r=40, t=70, b=100),
-    yaxis=dict(
-        gridcolor='darkgreen',
-        zeroline=True,
-        zerolinecolor='darkgreen'
-    )
-)
-
-st.plotly_chart(fig_cat, use_container_width=True)
-
-# Total Hours Worked Over Time
 hours_time = filtered_data.groupby('year_month')['Hours'].sum().reset_index()
 hours_time['year_month'] = hours_time['year_month'].astype(str)
-
 fig_hours = go.Figure()
 fig_hours.add_trace(go.Scatter(
     x=hours_time['year_month'],
@@ -197,43 +176,42 @@ fig_hours.add_trace(go.Scatter(
     marker=dict(size=8, color='green'),
     hovertemplate='Month: %{x}<br>Hours: %{y:.2f}<extra></extra>'
 ))
+fig_hours.update_layout(title='Total Hours Worked Over Time', xaxis_title='Year-Month', yaxis_title='Total Hours',
+                        plot_bgcolor='black', font=dict(family='Arial', size=14, color='lightgreen'),
+                        margin=dict(l=40, r=40, t=70, b=50),
+                        xaxis=dict(showgrid=True, gridcolor='darkgreen'),
+                        yaxis=dict(showgrid=True, gridcolor='darkgreen'))
 
-fig_hours.update_layout(
-    title='Total Hours Worked Over Time',
-    xaxis_title='Year-Month',
-    yaxis_title='Total Hours',
-    plot_bgcolor='black',
-    font=dict(family='Arial', size=14, color='lightgreen'),
-    margin=dict(l=40, r=40, t=70, b=50),
-    xaxis=dict(showgrid=True, gridcolor='darkgreen'),
-    yaxis=dict(showgrid=True, gridcolor='darkgreen')
-)
+# --- Tabs Layout ---
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["📂 Category Breakdown", "📈 Time Series", "☁️ Word Cloud", "📄 Data Table", "🧾 Raw Data"])
 
-st.plotly_chart(fig_hours, use_container_width=True)
+with tab1:
+    st.subheader("📂 Task Counts by Category")
+    st.plotly_chart(fig_cat, use_container_width=True)
 
-# Filtered Data Table
-st.subheader("📄 Filtered Task Data Table")
-st.dataframe(filtered_data, use_container_width=True)
+with tab2:
+    st.subheader("📈 Total Hours Worked Over Time")
+    st.plotly_chart(fig_hours, use_container_width=True)
 
-# Top 50 Most Common Lemmatized Words - WORD CLOUD
-with st.expander("🔍 Top 50 Most Common Words (Lemmatized)", expanded=False):
+with tab3:
+    st.subheader("☁️ Top 50 Most Common Lemmatized Words")
     all_words = [word for sublist in filtered_data['task_wo_punct_split_wo_stopwords_lemmatized'] for word in sublist]
     word_counts = Counter(all_words).most_common(50)
 
     if word_counts:
         word_freq_dict = dict(word_counts)
-        wordcloud = WordCloud(
-            width=1000,
-            height=500,
-            background_color='black',
-            colormap='Greens',
-            prefer_horizontal=1.0,
-            max_words=50
-        ).generate_from_frequencies(word_freq_dict)
-
+        wordcloud = WordCloud(width=1000, height=500, background_color='black', colormap='Greens', prefer_horizontal=1.0, max_words=50).generate_from_frequencies(word_freq_dict)
         fig_wc, ax = plt.subplots(figsize=(12, 6))
         ax.imshow(wordcloud, interpolation='bilinear')
         ax.axis("off")
         st.pyplot(fig_wc)
     else:
         st.write("No word frequency data available for the selected filters.")
+
+with tab4:
+    st.subheader("📄 Filtered Task Data Table")
+    st.dataframe(filtered_data, use_container_width=True)
+
+with tab5:
+    st.subheader("🧾 Raw Filtered Data (CSV Preview)")
+    st.code(filtered_data.head(10).to_csv(index=False))
