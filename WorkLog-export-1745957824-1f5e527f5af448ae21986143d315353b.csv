@@ -1,0 +1,150 @@
+id,task,started_at,minutes,description,created_at,updated_at,user_id,user_first_name,user_last_name,user_biography,user_feedbacks_count,user_feedbacks_average,user_achievements_count,user_locale,user_created_at,user_updated_at
+3VoJYJwL,Email template( basic),2025-02-22 05:00:00 UTC,210,"1. create and format an HTML email template.
+2. include dynamic content like images, links, and event details in an email.
+3. to send emails programmatically using Python and related libraries (smtplib, email.mime).",2025-03-26 14:32:16 UTC,2025-03-26 15:15:57 UTC,rV0D1qZV,ATIA,NAHIA,,0,,4,en-CA,2025-02-13 14:34:27 UTC,2025-04-24 09:48:48 UTC
+AO89W96z,Email Template(a functional email smtplibe for sending event-related emails.),2025-02-23 05:00:00 UTC,300,"created a functional email smtplibe for sending event-related emails. The template supports dynamic content (event names, messages, and images) and allows users to send emails to multiple recipients through a Flask web application.
+The process involved setting up environment variables, creating the HTML form, and using Python code to send the email via Gmail's SMTP server.",2025-03-26 14:38:59 UTC,2025-03-26 15:03:49 UTC,rV0D1qZV,ATIA,NAHIA,,0,,4,en-CA,2025-02-13 14:34:27 UTC,2025-04-24 09:48:48 UTC
+vLQ4R4pz,A dynamic Flask-based email Template that allows users to Parse Guest Data from a CSV File and send message one by one.,2025-02-27 05:00:00 UTC,350,"1. use the csv module to read and parse data from a CSV file containing guest information (e.g., name, email). 
+2. Extracted the guest details (name, first name, last name, and email)  from the CSV, and saved them in a list of dictionaries. This allows to send personalized emails to each guest using the extracted information. 
+3. Automatically populate and send emails to multiple recipients within the Flask application, pulling the recipient email addresses from the CSV file. 
+4. Make sure the file upload can be optional, meaning the sender can still send an email without attaching any files or images.
+5. include both inline images (for preview) and attachments (for download) in the same email. This allows the sender to have both options in the email: an image displayed in the body and a file that can be downloaded. 
+6. allowing the sender to upload any type of file (e.g., images, PDFs, documents) and attach it to the email. This attachment can be downloaded by the recipient from the email.
+7. embed an image inline within the email body, so that recipients can see the image directly in the email without downloading it. This is done using the Content-ID header in the email and referencing it in the HTML body of the email.",2025-03-26 14:43:47 UTC,2025-03-26 14:43:47 UTC,rV0D1qZV,ATIA,NAHIA,,0,,4,en-CA,2025-02-13 14:34:27 UTC,2025-04-24 09:48:48 UTC
+dV3oJodV,how to implement unit tests for my Flask application.,2025-02-28 05:00:00 UTC,230,"1. Test Parsing of Guest Data: I created a test case for the parse_guests function to ensure it correctly parses data from the CSV file and checks if the email field is present. 
+
+2. Test Homepage Loading: I wrote a test to verify that the homepage loads successfully and that the form elements for sending event emails are present. 
+
+3. Test Email Sending: 
+a) Without Attachment: I implemented a test to check if emails can be sent without an attachment. 
+
+b) With Attachment: I created a test case to verify that emails can be sent with an attachment. 
+
+4. Mocked Email Sending: I used mocking to simulate email sending via the SMTP server, ensuring no real emails are sent during tests, but that the logic for sending emails works as expected.",2025-03-26 14:46:47 UTC,2025-03-26 15:04:47 UTC,rV0D1qZV,ATIA,NAHIA,,0,,4,en-CA,2025-02-13 14:34:27 UTC,2025-04-24 09:48:48 UTC
+JV6XlX1z,Name Tag Generator,2025-03-01 05:00:00 UTC,270,"1. Name Tag Generator: I created a Python script that reads participant data from a CSV file and generates a webpage with name tags. Each tag includes the participant's name, title, and a QR code. 
+
+2. QR Code Integration: I implemented QR code generation that links to each participant's LinkedIn profile. If the LinkedIn URL was missing, the script falls back to a custom URL based on the participant's name. 
+
+3. HTML Output: The script generates an HTML file with the name tag layout, making it easy to print out the name tags for the event. The QR codes are embedded within the HTML page so that they can be easily scanned. 
+
+4. Error Handling and Missing Data: I added functionality to handle missing first names, last names, and LinkedIn URLs, ensuring that the name tags would still be created with available data.",2025-03-26 14:49:05 UTC,2025-03-26 15:05:08 UTC,rV0D1qZV,ATIA,NAHIA,,0,,4,en-CA,2025-02-13 14:34:27 UTC,2025-04-24 09:48:48 UTC
+AVMG5G9z,Modifying Name Tag Generator.,2025-03-02 05:00:00 UTC,240,"1. Name Handling: 
+a) Updated the code to correctly handle missing name fields. 
+If first name and last name are missing, the code now defaults to using the name field if available. 
+If the name field is also missing, the code defaults to using first name and last name or simply assigns ""Guest"" if both are missing. 
+
+2. Title Handling: 
+Adjusted the title field to ensure it remains blank if no title is provided in the CSV data. 
+If the title is missing, the code no longer shows the default value ""No Title"", ensuring a clean output with just the name and QR code.
+
+3. Label Size Research: 
+Objective: Researching the correct size for Avery standard labels to ensure that the name tags fit within the label dimensions on printed sheets. 
+
+Findings: Avery standard labels typically have a size of 4 inches x 2 inches for each label. 
+
+Current Attempt: Tried setting the size of each name tag to 4 inches wide and 2 inches high to match Avery labels. 
+
+Issue: Despite setting the width and height correctly, the layout with 2 columns per row is still not working as expected.",2025-03-26 14:53:23 UTC,2025-03-26 14:53:23 UTC,rV0D1qZV,ATIA,NAHIA,,0,,4,en-CA,2025-02-13 14:34:27 UTC,2025-04-24 09:48:48 UTC
+QVxW5WZL,"Avery 5395 (4-row, 2-column) name tag labels",2025-03-05 05:00:00 UTC,360,"Started with a 5-row, 2-column layout but faced difficulties making it fit properly. The PDF export didn't align correctly with the intended format. 
+
+Researched extensively from 7 AM to 1:30 PM, determined to make the 5-row, 2-column layout work. However, after testing multiple adjustments, I realized that a 4-row, 2-column layout was a better fit for Avery 5395 (US Letter, 4 rows, 2 columns). 
+
+Tried the Avery online platform, but it only supported a 4-row, 2-column layout—confirming that my adjustments needed to align with that standard. 
+
+Refined the layout and styling for proper formatting, ensuring each name tag was well-spaced and readable. 
+
+Created a mobile-friendly version for better accessibility. 
+
+Improved the PDF export to match the correct dimensions. 
+
+Extensive print testing using my home printer—every time I adjusted the layout, I printed a test version to verify the alignment and fit. 
+
+This process took a lot of time, but in the end, the 4-row, 2-column format (Avery 5395) was the best choice for the expected result.",2025-03-26 14:56:37 UTC,2025-03-26 15:16:56 UTC,rV0D1qZV,ATIA,NAHIA,,0,,4,en-CA,2025-02-13 14:34:27 UTC,2025-04-24 09:48:48 UTC
+jzmprp1O,Compare Files,2025-03-11 04:00:00 UTC,360,"Developed a Python script compare_attendees.py that:  
+
+Reads two CSV files: the original and updated attendee lists. 
+
+Compares unique emails (or phone numbers) between the two files. 
+
+Identifies and lists new attendees from the updated file that are not in the original file. 
+
+Generates a new CSV file (new_attendees.csv) with only the new attendees' details. 
+
+File Reading: Used pandas to load both CSV files into DataFrames. 
+
+Data Comparison: Used merge() and set operations to identify new attendees based on unique emails or phone numbers. 
+
+Output Generation: Created a new CSV file with the new attendees, excluding those already listed in the first file. 
+
+Validation: Tested the script with sample data to ensure only new attendees are included in the output file. 
+
+Handled edge cases like missing emails or phone numbers.",2025-03-26 14:59:19 UTC,2025-03-26 14:59:19 UTC,rV0D1qZV,ATIA,NAHIA,,0,,4,en-CA,2025-02-13 14:34:27 UTC,2025-04-24 09:48:48 UTC
+9OyY8YdO,"Enhancing the email template UI (styling, layout improvements)",2025-03-14 04:00:00 UTC,330,"Adding a recipient selection feature with checkboxes and a ""Select All"" option 
+
+Dynamic attendee list generation from a CSV file 
+
+Importing the nametag label generator and attendee comparison script into app.py 
+
+Adjusting template.html to add three buttons: Send, Name Tag, and Compare File 
+
+Ensuring proper file attachment handling (images, documents) 
+
+Testing and refining the email-sending functionality 
+
+Modifying the CSV file handling to always use the updated version for any action",2025-03-26 15:07:02 UTC,2025-03-26 15:16:44 UTC,rV0D1qZV,ATIA,NAHIA,,0,,4,en-CA,2025-02-13 14:34:27 UTC,2025-04-24 09:48:48 UTC
+KVGdad9O,Email Template with 3 actions,2025-03-16 04:00:00 UTC,420,"Explored how to add two more buttons in the email template. 
+
+Investigated how to create a list of attendees with checkboxes and serial numbers. 
+
+Researched how to group attendees by their starting letter (A, B, C, etc.). 
+
+Found ways to send emails to only the selected attendees. 
+
+Looked into how to trigger the two new buttons and import the necessary files into app.py. 
+
+Examined how to connect the newly added features to routes (still a work in progress). 
+
+Investigated how to update template.html to include the necessary changes.",2025-03-26 15:09:55 UTC,2025-03-26 15:10:26 UTC,rV0D1qZV,ATIA,NAHIA,,0,,4,en-CA,2025-02-13 14:34:27 UTC,2025-04-24 09:48:48 UTC
+QVdvgmWz,Enhancing email template with 3 actions,2025-03-17 04:00:00 UTC,360,"modify the layout to look cleaner. 
+
+ change the position of labels. 
+
+ place buttons horizontally in a row with proper spacing and size. 
+
+ add a ""Select All"" checkbox to select all attendees. 
+
+ place selected attendees in a container with a ""Remove"" button. 
+
+add a search box to filter attendees (case-insensitive) and show results at the top. 
+
+change the size of the image preview to a standard size when uploading an image. 
+
+ implement proper JavaScript for the newly added buttons. 
+
+ ensure that all three buttons trigger separately and do not interfere with each other. 
+
+ fix the name tag functionality so that only selected attendees (or all) from the recipient list are used. 
+
+ add an exception handler for all buttons to show success or failure messages. 
+
+generate name tags in a new file for selected attendees and allow downloading. 
+
+ ensure the compare file feature includes an upload container, displays new attendees, and provides a download link.",2025-03-26 15:15:33 UTC,2025-03-26 15:15:33 UTC,rV0D1qZV,ATIA,NAHIA,,0,,4,en-CA,2025-02-13 14:34:27 UTC,2025-04-24 09:48:48 UTC
+rL7xnjYV,Name Tag ( adjusted text and qrcodes),2025-03-20 04:00:00 UTC,60,"researched how to use HTML and CSS to create the structure of the name tags, including adjusting the layout of text and QR codes in a responsive way. 
+
+ studied various ways of achieving left-right alignment of elements in label templates (like using flexbox or grid layout in CSS for alignment). 
+
+This also involved learning how to balance text and graphics (QR codes) to ensure they fit neatly on the label while maintaining a clear and professional appearance.",2025-03-26 15:19:18 UTC,2025-03-26 15:19:18 UTC,rV0D1qZV,ATIA,NAHIA,,0,,4,en-CA,2025-02-13 14:34:27 UTC,2025-04-24 09:48:48 UTC
+1zE7wEMV,Name Tag Template with Multiple Label Sizes,2025-03-23 04:00:00 UTC,120,"1. Researched how to support multiple Avery label sizes within the name tag template. 
+
+2. Investigated the best approach to dynamically adjust the template layout based on the selected label size (e.g., for different Avery labels like 5160, 8160, etc.). 
+
+               3.Researched how to handle attendee selection in a user-friendly way, allowing     users to select individual attendees or all attendees. 
+
+4. Researched how to add a clear button that resets the search results and clears all selections. 
+
+5. Explored JavaScript solutions to update the selected attendees list in real-time. 
+
+6. Researched how to implement a dropdown list for selecting label sizes. 
+
+7. Investigated how to adjust the layout and formatting based on the size selected from the dropdown.",2025-03-26 15:21:41 UTC,2025-03-26 15:21:41 UTC,rV0D1qZV,ATIA,NAHIA,,0,,4,en-CA,2025-02-13 14:34:27 UTC,2025-04-24 09:48:48 UTC

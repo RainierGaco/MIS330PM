@@ -1,0 +1,25 @@
+id,task,started_at,minutes,description,created_at,updated_at,user_id,user_first_name,user_last_name,user_biography,user_feedbacks_count,user_feedbacks_average,user_achievements_count,user_locale,user_created_at,user_updated_at
+ZOgMAxRL,Created UX/UI first impressions,2025-02-15 05:00:00 UTC,180,Tested the website as a new user and gave feedback on UI and User Experience.,2025-02-23 22:22:58 UTC,2025-02-23 22:22:58 UTC,pL4XlEML,Mohammed,Patel,,1,5.0,4,en-CA,2025-02-11 23:05:32 UTC,2025-04-25 23:47:58 UTC
+XOBo5N2z,Created and organized spreadsheet to track anomalies.,2025-02-18 05:00:00 UTC,180,Created and organized spreadsheet to track and log any anomalies in the website. Any UX or UI issues are reported. Started reporting on specific browsers such as chrome.,2025-02-23 22:26:11 UTC,2025-02-23 22:26:11 UTC,pL4XlEML,Mohammed,Patel,,1,5.0,4,en-CA,2025-02-11 23:05:32 UTC,2025-04-25 23:47:58 UTC
+wzP8oAjz,Tested Website on Chrome across different devices,2025-02-23 05:00:00 UTC,420,"""Tested website on Chrome from a samsung phone
+Created report sheet and added a few entries""",2025-04-15 21:44:07 UTC,2025-04-15 21:45:30 UTC,pL4XlEML,Mohammed,Patel,,1,5.0,4,en-CA,2025-02-11 23:05:32 UTC,2025-04-25 23:47:58 UTC
+WzwMBmXV,Tested website,2025-02-24 05:00:00 UTC,480,"Tested website on Chrome from a Samsung Phone and 
+an Apple iPhone. Tried MacOS
+Created report sheet and added a few entries",2025-04-15 21:44:52 UTC,2025-04-15 21:46:15 UTC,pL4XlEML,Mohammed,Patel,,1,5.0,4,en-CA,2025-02-11 23:05:32 UTC,2025-04-25 23:47:58 UTC
+QVdm2eNO,Profile Sharing Testing Across Different Devices,2025-02-27 05:00:00 UTC,240,"""Tested website on Chrome from Apple Phone as well as 
+profile sharing capabilities
+Created report sheet and added a few entries""""""",2025-04-15 21:47:07 UTC,2025-04-15 21:47:07 UTC,pL4XlEML,Mohammed,Patel,,1,5.0,4,en-CA,2025-02-11 23:05:32 UTC,2025-04-25 23:47:58 UTC
+8OD1Wgjz,Email Issue,2025-03-05 05:00:00 UTC,240,Tested Safari and isolated chrome email issue.,2025-04-15 21:47:44 UTC,2025-04-15 21:47:44 UTC,pL4XlEML,Mohammed,Patel,,1,5.0,4,en-CA,2025-02-11 23:05:32 UTC,2025-04-25 23:47:58 UTC
+4LAq45rL,Meeting and test,2025-03-19 04:00:00 UTC,120,did a partial run thourhg test and had meeting with UX dev,2025-04-15 21:48:37 UTC,2025-04-15 21:48:37 UTC,pL4XlEML,Mohammed,Patel,,1,5.0,4,en-CA,2025-02-11 23:05:32 UTC,2025-04-25 23:47:58 UTC
+WONN6xQO,Tested with friends,2025-03-22 04:00:00 UTC,120,Did a few run thtough tests with a friend and got feedback,2025-04-15 21:49:40 UTC,2025-04-15 21:49:40 UTC,pL4XlEML,Mohammed,Patel,,1,5.0,4,en-CA,2025-02-11 23:05:32 UTC,2025-04-25 23:47:58 UTC
+YLr3evdV,MacOS,2025-04-05 04:00:00 UTC,240,Tested on MacOS and found a few bugs with notifications,2025-04-15 21:50:12 UTC,2025-04-15 21:50:12 UTC,pL4XlEML,Mohammed,Patel,,1,5.0,4,en-CA,2025-02-11 23:05:32 UTC,2025-04-25 23:47:58 UTC
+KVbbZ11V,test with Friend,2025-04-01 04:00:00 UTC,120,Did a test run with a friend,2025-04-15 21:50:40 UTC,2025-04-15 21:50:40 UTC,pL4XlEML,Mohammed,Patel,,1,5.0,4,en-CA,2025-02-11 23:05:32 UTC,2025-04-25 23:47:58 UTC
+pL4oajGz,Tested website,2025-04-06 04:00:00 UTC,360,"""Did a thorough test on new build on Samsung and Apple
+devices and Started building and organizing report""",2025-04-15 21:51:06 UTC,2025-04-15 21:51:06 UTC,pL4XlEML,Mohammed,Patel,,1,5.0,4,en-CA,2025-02-11 23:05:32 UTC,2025-04-25 23:47:58 UTC
+7O91vKjO,Document prep,2025-04-13 04:00:00 UTC,240,"""Spent Time on organizing and adding screenshots to document as well
+as testing more inricate functionalities""",2025-04-15 21:51:51 UTC,2025-04-15 21:55:16 UTC,pL4XlEML,Mohammed,Patel,,1,5.0,4,en-CA,2025-02-11 23:05:32 UTC,2025-04-25 23:47:58 UTC
+wzP8o4Qz,test new build,2025-04-09 04:00:00 UTC,120,"""Was testing Social Media links functionalities and how they work and 
+share profile functionalities.""",2025-04-15 21:52:27 UTC,2025-04-15 21:52:27 UTC,pL4XlEML,Mohammed,Patel,,1,5.0,4,en-CA,2025-02-11 23:05:32 UTC,2025-04-25 23:47:58 UTC
+8OD1Wv1z,Meeting,2025-04-11 04:00:00 UTC,60,Met with dev and went over bugs found,2025-04-15 21:52:47 UTC,2025-04-15 21:54:55 UTC,pL4XlEML,Mohammed,Patel,,1,5.0,4,en-CA,2025-02-11 23:05:32 UTC,2025-04-25 23:47:58 UTC
+kVaX8GZL,Testing,2025-04-08 04:00:00 UTC,300,Did a run on the new build with new changes,2025-04-15 21:53:13 UTC,2025-04-15 21:54:34 UTC,pL4XlEML,Mohammed,Patel,,1,5.0,4,en-CA,2025-02-11 23:05:32 UTC,2025-04-25 23:47:58 UTC
+1zEEW3Wz,Create final doc,2025-04-14 04:00:00 UTC,180,Organize report and make final document,2025-04-15 21:53:50 UTC,2025-04-15 21:53:50 UTC,pL4XlEML,Mohammed,Patel,,1,5.0,4,en-CA,2025-02-11 23:05:32 UTC,2025-04-25 23:47:58 UTC
