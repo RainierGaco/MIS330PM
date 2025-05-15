@@ -74,6 +74,15 @@ def load_data():
         lambda x: ' '.join(sorted(set(x))) if x else ''
     )
 
+    # Highlight which words were changed during lemmatization
+    def highlight_lemmatized(original, lemmatized):
+        return [f"**{o} → {l}**" if o != l else o for o, l in zip(original, lemmatized)]
+
+    combined_df['lemmatization_changes'] = combined_df.apply(
+        lambda row: highlight_lemmatized(row['task_wo_punct_split_wo_stopwords'], row['task_wo_punct_split_wo_stopwords_lemmatized']),
+        axis=1
+    )
+
     combined_df["Hours"] = combined_df["minutes"] / 60
     combined_df["week"] = pd.to_datetime(combined_df["started_at"], errors="coerce").dt.isocalendar().week
     combined_df["month"] = pd.to_datetime(combined_df["started_at"], errors="coerce").dt.month
@@ -217,6 +226,14 @@ st.plotly_chart(fig_hours, use_container_width=True)
 # Filtered Data Table
 st.subheader("📄 Filtered Task Data Table")
 st.dataframe(filtered_data[['Full_Name', 'started_at', 'task', 'Lemmatized_Task', 'Hours', 'Categorized']], use_container_width=True)
+
+# Show Lemmatization Highlights
+with st.expander("🔍 Lemmatization Word Changes", expanded=False):
+    for i in range(min(10, filtered_data.shape[0])):
+        row = filtered_data.iloc[i]
+        st.markdown(f"**Original Task:** {row['task']}")
+        st.markdown(f"**Lemmatization Changes:** {' '.join(row['lemmatization_changes'])}")
+        st.markdown("---")
 
 # Top 50 Most Common Lemmatized Words
 with st.expander("🔍 Top 50 Most Common Words (Lemmatized)", expanded=False):
