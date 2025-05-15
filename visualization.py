@@ -12,7 +12,6 @@ import nltk
 from nltk.stem import WordNetLemmatizer
 from wordcloud import WordCloud
 import plotly.express as px
-import plotly.graph_objects as go
 
 nltk.download('stopwords')
 nltk.download('wordnet')
@@ -21,6 +20,7 @@ warnings.filterwarnings("ignore", message="Converting to PeriodArray/Index repre
 
 st.set_page_config(page_title="Task Dashboard", layout="wide")
 
+# Dark theme styling
 st.markdown("""
     <style>
         .main, .block-container {
@@ -103,8 +103,10 @@ def load_data():
 
     return combined_df
 
+# Load data
 combined_df = load_data()
 
+# Sidebar filters
 st.sidebar.header("Filters")
 categories = st.sidebar.multiselect("Select Categories", options=combined_df['Categorized'].explode().unique())
 date_filter = st.sidebar.date_input("Filter by Date", [])
@@ -133,6 +135,7 @@ st.sidebar.download_button(
     mime="text/csv"
 )
 
+# Dashboard title and KPIs
 st.title("📊 Task Dashboard")
 
 col1, col2, col3, col4 = st.columns(4)
@@ -141,7 +144,7 @@ col2.metric("Total Hours", round(filtered_df["Hours"].sum(), 2))
 col3.metric("Unique Users", filtered_df["Full_Name"].nunique())
 col4.metric("Unique Projects", filtered_df["ProjectID"].nunique())
 
-# TABS FOR VISUALIZATION
+# Tabs
 category_tab, time_tab, wordcloud_tab, table_tab = st.tabs(["📂 Category Breakdown", "📈 Time Series", "☁️ Word Cloud", "📋 Data Table"])
 
 with category_tab:
@@ -171,18 +174,15 @@ with wordcloud_tab:
     word_counts = Counter(all_words).most_common(50)
 
     if word_counts:
-        # Generate word cloud
         wordcloud = WordCloud(width=1000, height=500, background_color='black', colormap='Greens').generate_from_frequencies(dict(word_counts))
         fig_wc, ax = plt.subplots(figsize=(10, 5))
         ax.imshow(wordcloud, interpolation='bilinear')
         ax.axis("off")
         st.pyplot(fig_wc)
 
-        # Prepare dataframe for visualization
         word_df = pd.DataFrame(word_counts, columns=["Word", "Count"])
-
-        # Use Plotly Treemap for Top 20 Words instead of bar chart
         top_words_df = word_df.head(20)
+
         treemap_fig = px.treemap(
             top_words_df,
             path=['Word'],
@@ -192,7 +192,6 @@ with wordcloud_tab:
             title="Top 20 Words Treemap"
         )
         st.plotly_chart(treemap_fig, use_container_width=True)
-
     else:
         st.info("No word frequency data available for the selected filters.")
 
@@ -200,6 +199,7 @@ with table_tab:
     st.subheader("Filtered Data Table")
     st.dataframe(filtered_df, use_container_width=True)
 
-    top_users = filtered_df.groupby('Full_Name')['Hours'].sum().reset_index().sort_values(by="Hours", ascending=False)
-    user_fig = px.bar(top_users, x="Full_Name", y="Hours", title="Hours Worked by User", color="Hours", color_continuous_scale="greens")
-    st.plotly_chart(user_fig, use_container_width=True)
+    st.subheader("Task Count by Category")
+    cat_summary = filtered_df.explode('Categorized')['Categorized'].value_counts().reset_index()
+    cat_summary.columns = ['Category', 'Task Count']
+    st.dataframe(cat_summary, use_container_width=True)
