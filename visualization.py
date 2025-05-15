@@ -58,16 +58,20 @@ def load_data():
     combined_df['year'] = pd.to_datetime(combined_df['started_at'], errors="coerce").dt.year
 
     combined_df['task_wo_punct'] = combined_df['task'].apply(lambda x: ''.join([char for char in str(x) if char not in string.punctuation]))
-    combined_df['task_wo_punct_split'] = combined_df['task_wo_punct'].apply(lambda x: re.split(r'\W+', str(x).lower()))
+    combined_df['task_wo_punct_split'] = combined_df['task_wo_punct'].apply(lambda x: re.split(r'\\W+', str(x).lower()))
 
     stopword = nltk.corpus.stopwords.words('english')
     combined_df['task_wo_punct_split_wo_stopwords'] = combined_df['task_wo_punct_split'].apply(
-        lambda x: [word for word in x if word not in stopword]
+        lambda x: [word for word in x if word not in stopword and word]
     )
 
     lemmatizer = WordNetLemmatizer()
     combined_df['task_wo_punct_split_wo_stopwords_lemmatized'] = combined_df['task_wo_punct_split_wo_stopwords'].apply(
         lambda x: [lemmatizer.lemmatize(word) for word in x]
+    )
+
+    combined_df['Lemmatized_Task'] = combined_df['task_wo_punct_split_wo_stopwords_lemmatized'].apply(
+        lambda x: ' '.join(sorted(set(x))) if x else ''
     )
 
     combined_df["Hours"] = combined_df["minutes"] / 60
@@ -212,7 +216,7 @@ st.plotly_chart(fig_hours, use_container_width=True)
 
 # Filtered Data Table
 st.subheader("📄 Filtered Task Data Table")
-st.dataframe(filtered_data, use_container_width=True)
+st.dataframe(filtered_data[['Full_Name', 'started_at', 'task', 'Lemmatized_Task', 'Hours', 'Categorized']], use_container_width=True)
 
 # Top 50 Most Common Lemmatized Words
 with st.expander("🔍 Top 50 Most Common Words (Lemmatized)", expanded=False):
