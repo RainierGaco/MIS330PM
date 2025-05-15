@@ -58,7 +58,7 @@ def load_data():
     combined_df['year'] = pd.to_datetime(combined_df['started_at'], errors="coerce").dt.year
 
     combined_df['task_wo_punct'] = combined_df['task'].apply(lambda x: ''.join([char for char in str(x) if char not in string.punctuation]))
-    combined_df['task_wo_punct_split'] = combined_df['task_wo_punct'].apply(lambda x: re.split(r'\W+', str(x).lower()))
+    combined_df['task_wo_punct_split'] = combined_df['task_wo_punct'].apply(lambda x: re.split(r'\\W+', str(x).lower()))
 
     stopword = nltk.corpus.stopwords.words('english')
     combined_df['task_wo_punct_split_wo_stopwords'] = combined_df['task_wo_punct_split'].apply(
@@ -124,9 +124,6 @@ st.sidebar.header("Filters")
 categories = st.sidebar.multiselect("Select Categories", options=combined_df['Categorized'].explode().unique())
 date_filter = st.sidebar.date_input("Filter by Date", [])
 full_name_filter = st.sidebar.multiselect("Filter by Full Name", options=combined_df['Full_Name'].unique())
-
-# Added slider for rows to display
-max_rows = st.sidebar.slider("Number of rows to display", min_value=10, max_value=100, value=50, step=10)
 
 filtered_data = combined_df.copy()
 
@@ -226,10 +223,10 @@ fig_hours.update_layout(
 
 st.plotly_chart(fig_hours, use_container_width=True)
 
-# Filtered Data Table (limited to max_rows)
+# Filtered Data Table (limit to 50 rows)
 st.subheader("📄 Filtered Task Data Table")
 st.dataframe(
-    filtered_data[['Full_Name', 'started_at', 'task', 'Lemmatized_Task', 'Hours', 'Categorized']].head(max_rows),
+    filtered_data[['Full_Name', 'started_at', 'task', 'Lemmatized_Task', 'Hours', 'Categorized']].head(50),
     use_container_width=True
 )
 
