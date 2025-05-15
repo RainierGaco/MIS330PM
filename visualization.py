@@ -10,6 +10,7 @@ import string
 import re
 import nltk
 from nltk.stem import WordNetLemmatizer
+from wordcloud import WordCloud  # NEW
 import plotly.graph_objects as go
 import plotly.express as px
 
@@ -214,33 +215,25 @@ st.plotly_chart(fig_hours, use_container_width=True)
 st.subheader("📄 Filtered Task Data Table")
 st.dataframe(filtered_data, use_container_width=True)
 
-# Top 50 Most Common Lemmatized Words
+# Top 50 Most Common Lemmatized Words - WORD CLOUD
 with st.expander("🔍 Top 50 Most Common Words (Lemmatized)", expanded=False):
     all_words = [word for sublist in filtered_data['task_wo_punct_split_wo_stopwords_lemmatized'] for word in sublist]
     word_counts = Counter(all_words).most_common(50)
+
     if word_counts:
-        words, counts = zip(*word_counts)
-        df_plot = pd.DataFrame({'Word': words, 'Count': counts})
-        fig = go.Figure(go.Bar(
-            x=df_plot['Word'],
-            y=df_plot['Count'],
-            marker=dict(
-                color=df_plot['Count'],
-                colorscale='Greens',
-                line=dict(width=0.5, color='black')
-            ),
-            hovertemplate='Word: %{x}<br>Count: %{y}<extra></extra>'
-        ))
-        fig.update_layout(
-            title="Top 50 Most Common Words (Lemmatized)",
-            xaxis_title="Word",
-            yaxis_title="Frequency",
-            xaxis_tickangle=-45,
-            plot_bgcolor='black',
-            font=dict(family='Arial', size=14, color='lightgreen'),
-            margin=dict(l=40, r=40, t=70, b=120),
-            yaxis=dict(gridcolor='darkgreen'),
-        )
-        st.plotly_chart(fig, use_container_width=True)
+        word_freq_dict = dict(word_counts)
+        wordcloud = WordCloud(
+            width=1000,
+            height=500,
+            background_color='black',
+            colormap='Greens',
+            prefer_horizontal=1.0,
+            max_words=50
+        ).generate_from_frequencies(word_freq_dict)
+
+        fig_wc, ax = plt.subplots(figsize=(12, 6))
+        ax.imshow(wordcloud, interpolation='bilinear')
+        ax.axis("off")
+        st.pyplot(fig_wc)
     else:
         st.write("No word frequency data available for the selected filters.")
