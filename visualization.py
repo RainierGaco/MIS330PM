@@ -149,15 +149,37 @@ category_tab, time_tab, wordcloud_tab, table_tab = st.tabs(["📂 Category Break
 
 with category_tab:
     st.subheader("Tasks by Category")
-    cat_counts = filtered_df.explode('Categorized')['Categorized'].value_counts()
-    bar_fig = px.bar(cat_counts, x=cat_counts.index, y=cat_counts.values, title="Task Counts by Category", color=cat_counts.values, color_continuous_scale='greens')
+
+    cat_counts = (
+        filtered_df.explode('Categorized')['Categorized']
+        .value_counts()
+        .reset_index()
+        .rename(columns={'index': 'Category', 'Categorized': 'Task Count'})
+    )
+
+    bar_fig = px.bar(
+        cat_counts,
+        x='Category',
+        y='Task Count',
+        title="Task Count by Category",
+        color='Task Count',
+        color_continuous_scale='greens',
+        labels={'Task Count': 'Number of Tasks'}
+    )
+    bar_fig.update_layout(xaxis_title="Category", yaxis_title="Number of Tasks")
     st.plotly_chart(bar_fig, use_container_width=True)
 
-    pie_fig = px.pie(cat_counts, names=cat_counts.index, values=cat_counts.values, title="Category Distribution")
+    pie_fig = px.pie(
+        cat_counts,
+        names='Category',
+        values='Task Count',
+        title="Category Distribution"
+    )
     st.plotly_chart(pie_fig, use_container_width=True)
 
 with time_tab:
     st.subheader("Hours Worked Over Time")
+
     time_df = filtered_df.groupby('year_month')['Hours'].sum().reset_index()
     time_df['year_month'] = time_df['year_month'].astype(str)
     line_fig = px.line(time_df, x="year_month", y="Hours", title="Total Hours per Month", markers=True)
