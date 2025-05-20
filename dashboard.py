@@ -12,6 +12,7 @@ import plotly.express as px
 import requests
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
+import squarify
 
 
 # Token and GitHub details
@@ -556,23 +557,31 @@ with tab6:
                       title='Lowest 5 Users by Average Time Spent', labels={'user_first_name': 'User', 'minutes': 'Avg Minutes'})
         st.plotly_chart(fig4, use_container_width=True)
 
-with tab7:
-    st.subheader(" ☁️ Word Cloud of Tasks")
+with tab7.subheader(" ☁️ Word Cloud of Tasks")
 
-    # Generate text for word cloud
-    text = " ".join(filtered_data['task'].dropna().astype(str).values)
-    if not text.strip():
-        st.info("No task data available for word cloud.")
-    else:
-        wc = WordCloud(width=800, height=400, background_color="white").generate(text)
-        fig, ax = plt.subplots(figsize=(12, 6))
-        ax.imshow(wc, interpolation='bilinear')
-        ax.axis("off")
-        st.pyplot(fig)
+# Generate text for word cloud
+text = " ".join(filtered_data['task'].dropna().astype(str).values)
+if not text.strip():
+    st.info("No task data available for word cloud.")
+else:
+    # Word Cloud plot
+    wc = WordCloud(width=800, height=400, background_color="white").generate(text)
+    fig_wc, ax_wc = plt.subplots(figsize=(12, 6))
+    ax_wc.imshow(wc, interpolation='bilinear')
+    ax_wc.axis("off")
+    st.pyplot(fig_wc)
+
+    # Tree Map plot of task frequencies
+    task_counts = filtered_data['task'].value_counts()
+    if not task_counts.empty:
+        fig_tm, ax_tm = plt.subplots(figsize=(12, 6))
+        labels = [f"{task}\n{count}" for task, count in zip(task_counts.index, task_counts.values)]
+        sizes = task_counts.values
+        squarify.plot(sizes=sizes, label=labels, alpha=0.7, ax=ax_tm)
+        ax_tm.axis('off')
+        st.pyplot(fig_tm)
 
     # AI Insight
-    st.markdown("### 🧠 Insight")
-    task_counts = filtered_data['task'].value_counts()
     top_wc_task = task_counts.index[0] if not task_counts.empty else None
 
     wc_summary = (
