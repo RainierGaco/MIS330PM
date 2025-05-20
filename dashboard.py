@@ -559,13 +559,14 @@ with tab6:
 
 tab7.subheader(" ☁️ Word Cloud and Treemap of Tasks")
 
+# Use original 'task' column for word cloud text
 tasks_series = filtered_data['task'].dropna().astype(str)
 text = " ".join(tasks_series.values)
 
 if not text.strip():
     st.info("No task data available for word cloud or treemap.")
 else:
-    # Word Cloud plot
+    # Word Cloud plot (based on 'task' column)
     wc = WordCloud(width=800, height=400, background_color="white").generate(text)
     fig_wc, ax_wc = plt.subplots(figsize=(12, 6))
     ax_wc.imshow(wc, interpolation='bilinear')
@@ -586,33 +587,39 @@ else:
     st.markdown("### 🧠 Insight")
     st.info(wc_summary)
 
-    # Treemap plot of top 50 tasks
-    if not task_counts.empty:
-        top_words_df = pd.DataFrame({
-            'Word': task_counts.index[:50],
-            'Count': task_counts.values[:50]
-        })
+    # --- TREEMAP using 'lemmatized_word' column ---
+    if 'lemmatized_word' in filtered_data.columns:
+        lemmatized_series = filtered_data['lemmatized_word'].dropna().astype(str)
+        lemma_counts = lemmatized_series.value_counts().head(50)
 
-        treemap_fig = px.treemap(
-            top_words_df,
-            path=['Word'],
-            values='Count',
-            color='Count',
-            color_continuous_scale='Greens',
-            title="Top 50 Tasks Treemap"
-        )
-        st.plotly_chart(treemap_fig, use_container_width=True)
+        if not lemma_counts.empty:
+            top_words_df = pd.DataFrame({
+                'Word': lemma_counts.index,
+                'Count': lemma_counts.values
+            })
 
-        # Treemap Insight below treemap
-        most_common_task = task_counts.idxmax()
-        least_common_task = task_counts.index[49] if len(task_counts) > 49 else task_counts.idxmin()
-        treemap_insight = (
-            f"The treemap highlights the **top 50 most frequent tasks** by size and color intensity. "
-            f"**{most_common_task}** is the largest segment, indicating it is the dominant task within this subset.\n\n"
-            f"Tasks like **{least_common_task}** appear less frequently but are still significant enough to be in the top 50. "
-            f"This visualization helps identify both key focus areas and less frequent but important tasks."
-        )
-        st.markdown("### 🧠 Treemap Insight")
-        st.info(treemap_insight)
+            treemap_fig = px.treemap(
+                top_words_df,
+                path=['Word'],
+                values='Count',
+                color='Count',
+                color_continuous_scale='Greens',
+                title="Top 50 Lemmatized Words Treemap"
+            )
+            st.plotly_chart(treemap_fig, use_container_width=True)
+
+            # Treemap Insight below treemap
+            most_common_lemma = lemma_counts.idxmax()
+            least_common_lemma = lemma_counts.index[-1]
+            treemap_insight = (
+                f"The treemap highlights the **top 50 most frequent lemmatized words** by size and color intensity. "
+                f"**{most_common_lemma}** is the largest segment, indicating it is the dominant word within this subset.\n\n"
+                f"Words like **{least_common_lemma}** appear less frequently but are still significant enough to be in the top 50. "
+                f"This visualization helps identify key themes and variations of task descriptions."
+            )
+            st.markdown("### 🧠 Treemap Insight")
+            st.info(treemap_insight)
+        else:
+            st.info("No lemmatized word frequency data available for the selected filters.")
     else:
-        st.info("No word frequency data available for the selected filters.")
+        st.warning("The 'lemmatized_word' column is missing in the filtered data.")
