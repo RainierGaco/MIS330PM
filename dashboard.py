@@ -557,12 +557,14 @@ with tab6:
                       title='Lowest 5 Users by Average Time Spent', labels={'user_first_name': 'User', 'minutes': 'Avg Minutes'})
         st.plotly_chart(fig4, use_container_width=True)
 
-tab7.subheader(" ☁️ Word Cloud of Tasks")
+tab7.subheader(" ☁️ Word Cloud and Treemap of Tasks")
 
-# Generate text for word cloud
-text = " ".join(filtered_data['task'].dropna().astype(str).values)
+# Prepare text and frequencies
+tasks_series = filtered_data['task'].dropna().astype(str)
+text = " ".join(tasks_series.values)
+
 if not text.strip():
-    st.info("No task data available for word cloud.")
+    st.info("No task data available for word cloud or treemap.")
 else:
     # Word Cloud plot
     wc = WordCloud(width=800, height=400, background_color="white").generate(text)
@@ -571,19 +573,28 @@ else:
     ax_wc.axis("off")
     st.pyplot(fig_wc)
 
-    # Tree Map plot of task frequencies
-    task_counts = filtered_data['task'].value_counts()
+    # Calculate top 50 task counts for treemap
+    task_counts = tasks_series.value_counts().head(50)
     if not task_counts.empty:
-        fig_tm, ax_tm = plt.subplots(figsize=(12, 6))
-        labels = [f"{task}\n{count}" for task, count in zip(task_counts.index, task_counts.values)]
-        sizes = task_counts.values
-        squarify.plot(sizes=sizes, label=labels, alpha=0.7, ax=ax_tm)
-        ax_tm.axis('off')
-        st.pyplot(fig_tm)
+        top_words_df = pd.DataFrame({
+            'Word': task_counts.index,
+            'Count': task_counts.values
+        })
+
+        treemap_fig = px.treemap(
+            top_words_df,
+            path=['Word'],
+            values='Count',
+            color='Count',
+            color_continuous_scale='Greens',
+            title="Top 50 Tasks Treemap"
+        )
+        st.plotly_chart(treemap_fig, use_container_width=True)
+    else:
+        st.info("No word frequency data available for the selected filters.")
 
     # AI Insight
     top_wc_task = task_counts.index[0] if not task_counts.empty else None
-
     wc_summary = (
         f"The word cloud visualizes the most frequently logged tasks. "
         f"**{top_wc_task}** appears most often, suggesting it's central to team operations.\n\n"
