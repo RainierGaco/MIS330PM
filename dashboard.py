@@ -557,7 +557,7 @@ with tab6:
                       title='Lowest 5 Users by Average Time Spent', labels={'user_first_name': 'User', 'minutes': 'Avg Minutes'})
         st.plotly_chart(fig4, use_container_width=True)
 
-with tab7.subheader(" ☁️ Word Cloud of Tasks")
+tab7.subheader(" ☁️ Word Cloud of Tasks")
 
 # Generate text for word cloud
 text = " ".join(filtered_data['task'].dropna().astype(str).values)
