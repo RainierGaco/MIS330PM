@@ -557,41 +557,48 @@ with tab6:
                       title='Lowest 5 Users by Average Time Spent', labels={'user_first_name': 'User', 'minutes': 'Avg Minutes'})
         st.plotly_chart(fig4, use_container_width=True)
 
-tab7.subheader(" ☁️ Word Cloud and Treemap of Tasks")
+with tab7:
+    st.subheader(" ☁️ Word Cloud and Treemap of Tasks")
 
-# Use original 'task' column for word cloud text
-tasks_series = filtered_data['task'].dropna().astype(str)
-text = " ".join(tasks_series.values)
+    # Check for required columns first
+    required_cols = ['task', 'task_wo_punct_split_wo_stopwords_lemmatized']
+    missing_cols = [col for col in required_cols if col not in filtered_data.columns]
+    if missing_cols:
+        st.error(f"Missing columns in data: {missing_cols}")
+        st.write("Available columns:", filtered_data.columns.tolist())
+        st.stop()
 
-if not text.strip():
-    st.info("No task data available for word cloud or treemap.")
-else:
-    # Word Cloud plot (based on 'task' column)
-    wc = WordCloud(width=800, height=400, background_color="white").generate(text)
-    fig_wc, ax_wc = plt.subplots(figsize=(12, 6))
-    ax_wc.imshow(wc, interpolation='bilinear')
-    ax_wc.axis("off")
-    st.pyplot(fig_wc)
+    # Word Cloud generation using original 'task' column
+    tasks_series = filtered_data['task'].dropna().astype(str)
+    text = " ".join(tasks_series.values)
 
-    # Word Cloud Insight right below word cloud
-    task_counts = tasks_series.value_counts()
-    top_wc_task = task_counts.index[0] if not task_counts.empty else None
-    wc_summary = (
-        f"The word cloud visualizes the most frequently logged tasks. "
-        f"**{top_wc_task}** appears most often, suggesting it's central to team operations.\n\n"
-        f"Frequent mentions may reflect routine responsibilities, while missing or rare task types could indicate under-reporting "
-        f"or areas with less activity.\n\n"
-        f"Use this to understand recurring themes or evaluate if task tracking is comprehensive."
-        if top_wc_task else "No task text was available to analyze frequency trends."
-    )
-    st.markdown("### 🧠 Insight")
-    st.info(wc_summary)
+    if not text.strip():
+        st.info("No task data available for word cloud or treemap.")
+    else:
+        # Word Cloud plot
+        wc = WordCloud(width=800, height=400, background_color="white").generate(text)
+        fig_wc, ax_wc = plt.subplots(figsize=(12, 6))
+        ax_wc.imshow(wc, interpolation='bilinear')
+        ax_wc.axis("off")
+        st.pyplot(fig_wc)
 
-    # TREEMAP based on exploded lemmatized words
-    if 'task_wo_punct_split_wo_stopwords_lemmatized' in filtered_data.columns:
+        # Word Cloud Insight below word cloud
+        task_counts = tasks_series.value_counts()
+        top_wc_task = task_counts.index[0] if not task_counts.empty else None
+        wc_summary = (
+            f"The word cloud visualizes the most frequently logged tasks. "
+            f"**{top_wc_task}** appears most often, suggesting it's central to team operations.\n\n"
+            f"Frequent mentions may reflect routine responsibilities, while missing or rare task types could indicate under-reporting "
+            f"or areas with less activity.\n\n"
+            f"Use this to understand recurring themes or evaluate if task tracking is comprehensive."
+            if top_wc_task else "No task text was available to analyze frequency trends."
+        )
+        st.markdown("### 🧠 Insight")
+        st.info(wc_summary)
+
+        # TREEMAP based on exploded lemmatized words column
         exploded_lemmas = filtered_data.explode('task_wo_punct_split_wo_stopwords_lemmatized')
         exploded_lemmas_series = exploded_lemmas['task_wo_punct_split_wo_stopwords_lemmatized'].dropna().astype(str)
-
         lemma_counts = exploded_lemmas_series.value_counts().head(50)
 
         if not lemma_counts.empty:
@@ -623,5 +630,3 @@ else:
             st.info(treemap_insight)
         else:
             st.info("No lemmatized word frequency data available for the selected filters.")
-    else:
-        st.warning("The 'task_wo_punct_split_wo_stopwords_lemmatized' column is missing in the filtered data.")
