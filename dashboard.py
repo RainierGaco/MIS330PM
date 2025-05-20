@@ -559,7 +559,6 @@ with tab6:
 
 tab7.subheader(" ☁️ Word Cloud and Treemap of Tasks")
 
-# Prepare text and frequencies
 tasks_series = filtered_data['task'].dropna().astype(str)
 text = " ".join(tasks_series.values)
 
@@ -573,12 +572,25 @@ else:
     ax_wc.axis("off")
     st.pyplot(fig_wc)
 
-    # Calculate top 50 task counts for treemap
-    task_counts = tasks_series.value_counts().head(50)
+    # Word Cloud Insight right below word cloud
+    task_counts = tasks_series.value_counts()
+    top_wc_task = task_counts.index[0] if not task_counts.empty else None
+    wc_summary = (
+        f"The word cloud visualizes the most frequently logged tasks. "
+        f"**{top_wc_task}** appears most often, suggesting it's central to team operations.\n\n"
+        f"Frequent mentions may reflect routine responsibilities, while missing or rare task types could indicate under-reporting "
+        f"or areas with less activity.\n\n"
+        f"Use this to understand recurring themes or evaluate if task tracking is comprehensive."
+        if top_wc_task else "No task text was available to analyze frequency trends."
+    )
+    st.markdown("### 🧠 Insight")
+    st.info(wc_summary)
+
+    # Treemap plot of top 50 tasks
     if not task_counts.empty:
         top_words_df = pd.DataFrame({
-            'Word': task_counts.index,
-            'Count': task_counts.values
+            'Word': task_counts.index[:50],
+            'Count': task_counts.values[:50]
         })
 
         treemap_fig = px.treemap(
@@ -591,33 +603,16 @@ else:
         )
         st.plotly_chart(treemap_fig, use_container_width=True)
 
-        # Insight for Treemap
+        # Treemap Insight below treemap
         most_common_task = task_counts.idxmax()
-        least_common_task = task_counts.idxmin()
+        least_common_task = task_counts.index[49] if len(task_counts) > 49 else task_counts.idxmin()
         treemap_insight = (
             f"The treemap highlights the **top 50 most frequent tasks** by size and color intensity. "
             f"**{most_common_task}** is the largest segment, indicating it is the dominant task within this subset.\n\n"
             f"Tasks like **{least_common_task}** appear less frequently but are still significant enough to be in the top 50. "
             f"This visualization helps identify both key focus areas and less frequent but important tasks."
         )
-    else:
-        st.info("No word frequency data available for the selected filters.")
-        treemap_insight = None
-
-    # AI Insight with icons and summaries
-    top_wc_task = task_counts.index[0] if not task_counts.empty else None
-    wc_summary = (
-        f"The word cloud visualizes the most frequently logged tasks. "
-        f"**{top_wc_task}** appears most often, suggesting it's central to team operations.\n\n"
-        f"Frequent mentions may reflect routine responsibilities, while missing or rare task types could indicate under-reporting "
-        f"or areas with less activity.\n\n"
-        f"Use this to understand recurring themes or evaluate if task tracking is comprehensive."
-        if top_wc_task else "No task text was available to analyze frequency trends."
-    )
-
-    st.markdown("### 🧠 Insight")
-    st.info(wc_summary)
-
-    if treemap_insight:
         st.markdown("### 🧠 Treemap Insight")
         st.info(treemap_insight)
+    else:
+        st.info("No word frequency data available for the selected filters.")
