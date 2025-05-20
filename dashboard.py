@@ -587,10 +587,13 @@ else:
     st.markdown("### 🧠 Insight")
     st.info(wc_summary)
 
-    # --- TREEMAP using 'lemmatized_word' column ---
-    if 'lemmatized_word' in filtered_data.columns:
-        lemmatized_series = filtered_data['lemmatized_word'].dropna().astype(str)
-        lemma_counts = lemmatized_series.value_counts().head(50)
+    # --- TREEMAP based on exploded lemmatized words ---
+    if 'task_wo_punct_split_wo_stopwords_lemmatized' in filtered_data.columns:
+        # Explode the list of lemmatized words into a flat series
+        exploded_lemmas = filtered_data.explode('task_wo_punct_split_wo_stopwords_lemmatized')
+        exploded_lemmas_series = exploded_lemmas['task_wo_punct_split_wo_stopwords_lemmatized'].dropna().astype(str)
+
+        lemma_counts = exploded_lemmas_series.value_counts().head(50)
 
         if not lemma_counts.empty:
             top_words_df = pd.DataFrame({
@@ -622,4 +625,5 @@ else:
         else:
             st.info("No lemmatized word frequency data available for the selected filters.")
     else:
-        st.warning("The 'lemmatized_word' column is missing in the filtered data.")
+        st.warning("The 'task_wo_punct_split_wo_stopwords_lemmatized' column is missing in the filtered data.")
+Key points:
